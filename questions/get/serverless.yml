@@ -1,0 +1,61 @@
+service: items-get
+
+frameworkVersion: ${self:custom.active.serverless-version}
+
+plugins:
+  - serverless-domain-manager
+
+custom:
+  active:       ${file(../../conf.${self:provider.stage}.yml):conf}
+  customDomain: ${file(../../conf.${self:provider.stage}.yml):userDomain}
+  serviceName: list
+
+provider:
+  name: aws
+  runtime: go1.x
+  stage:   ${opt:stage, 'dev'}
+  region:  us-east-1
+  memorySize: 128
+  deploymentBucket:
+    name: ${self:custom.active.deployment_bucket}
+  deploymentPrefix: ${self:custom.active.deployment_prefix}
+  environment:
+    DYNAMO_USER: ${self:custom.active.dynamodb_user}
+    DYNAMO_ACCOUNT: ${self:custom.active.dynamodb_account}
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.active.account}:table/${self:custom.active.dynamodb_user}
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.active.account}:table/${self:custom.active.dynamodb_user}/index/*
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.active.account}:table/${self:custom.active.dynamodb_account}
+        - arn:aws:dynamodb:${self:provider.region}:${self:custom.active.account}:table/${self:custom.active.dynamodb_account}/index/*
+
+resources:
+  Resources:
+    V1LogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        RetentionInDays: ${self:custom.active.log_retention}
+
+package:
+  individually: true
+  exclude:
+   - ./**
+
+functions:
+  v1:
+    handler: bin/v1
+    package:
+      include:
+        - ./bin/v1
+    timeout: 30
+    events:
+      - http:
+          path: v1
+          method: post

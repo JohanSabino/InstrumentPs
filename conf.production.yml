@@ -1,0 +1,21 @@
+
+conf:
+  region:                                   us-east-1
+  account:                                  817533195490
+
+  serverless-version:                       ">=2.72.0"
+
+  dynamodb_user:                            prod-user
+  dynamodb_account:                         prod-account
+
+  logstash_connection:              ""
+  logstash_user:                    ""
+  logstash_password:                ""
+  logstash_index:                   ""
+
+itemsDomain:
+  domainName: questions.depressive-inventory.com
+  basePath:   ${self:custom.serviceName}
+  stage:      ${self:provider.stage}
+  createRoute53Record: true
+  certificateName: depressive-inventory.com
